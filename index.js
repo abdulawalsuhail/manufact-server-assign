@@ -19,7 +19,7 @@ app.use(express.json());
 
 
 
-const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.atw05.mongodb.net/?retryWrites=true&w=majority`;
+const uri = `mongodb+srv://aas_electronics:xQDszruTIvlC3IW7@cluster0.atw05.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 // console.log(uri)
 
@@ -137,7 +137,7 @@ async function run() {
             res.send(booking);
         })
 
-        app.post('/product', async (req, res) => {
+        app.post('/booking', async (req, res) => {
             const booking = req.body;
             const query = { product: booking.product,  customer: booking.customer }
             const exists = await bookingCollection.findOne(query);
