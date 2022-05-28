@@ -45,7 +45,8 @@ async function run() {
         await client.connect();
         const productCollection = client.db('AAS_Electronics').collection('Products')
         const bookingCollection = client.db('AAS_Electronics').collection('bookings')
-        const orderCollection = client.db('AAS_Electronics').collection('order');
+        const reviewCollection = client.db('AAS_Electronics').collection('reviews');
+        const orderCollection = client.db('AAS_Electronics').collection('orders');
         const userCollection = client.db('AAS_Electronics').collection('users');
 
 
@@ -95,6 +96,28 @@ async function run() {
         // order api
 
 
+
+
+
+
+        // review post api
+        app.get('/review',async(req,res)=>{
+            const query = {};
+            const cursor = reviewCollection.find(query)
+            // .project({ name: 1 });
+            const reviews = await cursor.toArray();
+            res.send(reviews);
+        })
+        app.post('/review',async (req,res)=>{
+            const newReviews =req.body
+            const result= await reviewCollection.insertOne(newReviews)
+            res.send(result)
+        })
+
+
+
+
+        // user info all api
         app.get('/user', verifyJWT, async (req, res) => {
             const users = await userCollection.find().toArray();
 
