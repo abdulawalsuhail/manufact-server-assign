@@ -45,6 +45,7 @@ async function run() {
         await client.connect();
         const productCollection = client.db('AAS_Electronics').collection('Products')
         const bookingCollection = client.db('AAS_Electronics').collection('bookings')
+        const orderCollection = client.db('AAS_Electronics').collection('order');
         const userCollection = client.db('AAS_Electronics').collection('users');
 
 
@@ -71,37 +72,36 @@ async function run() {
             const id = req.params.id;
             const query = { _id: ObjectId(id) };
             const product = await productCollection.findOne(query);
-            console.log(product);
+            // console.log(product);
             res.send(product);
         });
+
+        // add a new item product
+        app.post('/product', async (req, res) => {
+            const newProduct = req.body
+            const tokenInfo = req.headers.authorization
+            const result = await productCollection.insertOne(newProduct)
+            res.send(result)
+        })
+
+        // delete api
+        app.delete('/product/:id', async (req, res) => {
+            const id = req.params.id
+            const query = { _id: ObjectId(id) };
+            const result = await productCollection.deleteOne(query)
+            res.send(result)
+        })
+
+        // order api
+
 
         app.get('/user', verifyJWT, async (req, res) => {
             const users = await userCollection.find().toArray();
 
             res.send(users);
         });
-        app.get('/admin/:email', async (req, res) => {
-            const email = req.params.email;
-            const user = await userCollection.findOne({ email: email });
-            // const isAdmin = user.role === 'admin';
-            res.send(user)
-        })
 
-
-
-        app.put('/user/admin/:email', verifyJWT, verifyAdmin, async (req, res) => {
-            const email = req.params.email;
-            const filter = { email: email };
-            const updateDoc = {
-                $set: { role: 'admin' },
-            };
-            const result = await userCollection.updateOne(filter, updateDoc);
-            res.send(result);
-        })
-
-
-
-
+        
         app.put('/user/:email', async (req, res) => {
             const email = req.params.email;
             const user = req.body;
@@ -115,38 +115,58 @@ async function run() {
             res.send({ result, token })
         })
 
-
-        app.get('/booking', verifyJWT, async (req, res) => {
-            const patient = req.query.customer;
-            // console.log('jot token', authHeader)
-            const decodedEmail = req.decoded.email;
-            if (patient === decodedEmail) {
-                const query = { patient: customer };
-                const bookings = await bookingCollection.find(query).toArray();
-                return res.send(bookings);
-            }
-            else {
-                return res.status(403).send({ message: 'forbidden access' });
-            }
+        app.put('/user/admin/:email', verifyJWT, verifyAdmin, async (req, res) => {
+            const email = req.params.email;
+            const filter = { email: email };
+            const updateDoc = {
+                $set: { role: 'admin' },
+            };
+            const result = await userCollection.updateOne(filter, updateDoc);
+            res.send(result);
         })
+        app.get('/admin/:email', async (req, res) => {
+                const email = req.params.email;
+                const user = await userCollection.findOne({ email: email });
+                const isAdmin = user.role === 'admin';
+                res.send(user)
+            })
 
-        app.get('/booking/:id', verifyJWT, async (req, res) => {
-            const id = req.params.id;
-            const query = { _id: ObjectId(id) };
-            const booking = await bookingCollection.findOne(query);
-            res.send(booking);
-        })
 
-        app.post('/booking', async (req, res) => {
-            const booking = req.body;
-            const query = { product: booking.product,  customer: booking.customer }
-            const exists = await bookingCollection.findOne(query);
-            if (exists) {
-                return res.send({ success: false, booking: exists })
-            }
-            const result = await bookingCollection.insertOne(booking);
-            return res.send({ success: true, result });
-        })
+
+
+
+
+        // app.get('/booking', verifyJWT, async (req, res) => {
+        //     const patient = req.query.customer;
+        //     // console.log('jot token', authHeader)
+        //     const decodedEmail = req.decoded.email;
+        //     if (patient === decodedEmail) {
+        //         const query = { patient: customer };
+        //         const bookings = await bookingCollection.find(query).toArray();
+        //         return res.send(bookings);
+        //     }
+        //     else {
+        //         return res.status(403).send({ message: 'forbidden access' });
+        //     }
+        // })
+
+        // app.get('/booking/:id', verifyJWT, async (req, res) => {
+        //     const id = req.params.id;
+        //     const query = { _id: ObjectId(id) };
+        //     const booking = await bookingCollection.findOne(query);
+        //     res.send(booking);
+        // })
+
+        // app.post('/booking', async (req, res) => {
+        //     const booking = req.body;
+        //     const query = { product: booking.product, customer: booking.customer }
+        //     const exists = await bookingCollection.findOne(query);
+        //     if (exists) {
+        //         return res.send({ success: false, booking: exists })
+        //     }
+        //     const result = await bookingCollection.insertOne(booking);
+        //     return res.send({ success: true, result });
+        // })
 
         // app.patch('/product/:id', verifyJWT, async (req, res) => {
         //     const id = req.params.id;
