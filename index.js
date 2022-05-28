@@ -3,6 +3,7 @@ const cors = require('cors');
 require('dotenv').config;
 const jwt = require('jsonwebtoken');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const { verify } = require('jsonwebtoken');
 const port = process.env.PORT || 5000
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
@@ -44,9 +45,9 @@ async function run() {
     try {
         await client.connect();
         const productCollection = client.db('AAS_Electronics').collection('Products')
-        const bookingCollection = client.db('AAS_Electronics').collection('bookings')
         const reviewCollection = client.db('AAS_Electronics').collection('reviews');
         const orderCollection = client.db('AAS_Electronics').collection('orders');
+        const profileCollection = client.db('AAS_Electronics').collection('profiles');
         const userCollection = client.db('AAS_Electronics').collection('users');
 
 
@@ -98,19 +99,51 @@ async function run() {
 
 
 
+        // user my profile all api
+        app.put('/profile/:email', verifyJWT, async (req, res) => {
+            const email = req.params.email
+            const profile = req.body
+            const filter = { email: email }
+            const options = { upsert: true }
+            const updatedDoc = {
+                $set: {
+                    name: profile.name,
+                    email: profile.email,
+                    address: profile.address,
+                    education: profile.education,
+                    phone: profile.phone,
+                    location: profile.location,
+                    city: profile.city,
+                    country: profile.country,
+                    social: profile.social
+                }
+            }
+            const result = await profileCollection.updateOne(filter, updatedDoc, options)
+            res.send(result)
+        })
+
+        // user profile info get api 
+        app.get('/profile',verify ,async(req,res)=>{
+            const email = req.query.email
+            const query = {email:email}
+            const cursor =profileCollection.find(query)
+            const profile= await cursor.toArray()
+            res.send(profile)
+        })
+
 
 
         // review post api
-        app.get('/review',async(req,res)=>{
+        app.get('/review', async (req, res) => {
             const query = {};
             const cursor = reviewCollection.find(query)
             // .project({ name: 1 });
             const reviews = await cursor.toArray();
             res.send(reviews);
         })
-        app.post('/review',async (req,res)=>{
-            const newReviews =req.body
-            const result= await reviewCollection.insertOne(newReviews)
+        app.post('/review', async (req, res) => {
+            const newReviews = req.body
+            const result = await reviewCollection.insertOne(newReviews)
             res.send(result)
         })
 
@@ -124,7 +157,7 @@ async function run() {
             res.send(users);
         });
 
-        
+
         app.put('/user/:email', async (req, res) => {
             const email = req.params.email;
             const user = req.body;
@@ -148,11 +181,11 @@ async function run() {
             res.send(result);
         })
         app.get('/admin/:email', async (req, res) => {
-                const email = req.params.email;
-                const user = await userCollection.findOne({ email: email });
-                const isAdmin = user.role === 'admin';
-                res.send(user)
-            })
+            const email = req.params.email;
+            const user = await userCollection.findOne({ email: email });
+            const isAdmin = user.role === 'admin';
+            res.send(user)
+        })
 
 
 
