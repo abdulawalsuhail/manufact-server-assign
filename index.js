@@ -95,7 +95,33 @@ async function run() {
         })
 
         // order api
+        app.post('/order', async (req, res) => {
+            const booking = req.body;
+            const query = {
+                productName: booking.product,
+                customerName: booking.customerName,
+                email: booking.customer,
+                MOQ: booking.productMOQ,
+                totalPrice: booking.totalPrice,
+                phone: booking.phone
+            };
+            const result = await orderCollection.insertOne(query);
+            res.send(result);
+        });
 
+        app.get('/order', async (req, res) => {
+            const query = {}
+            const cursor = orderCollection.find(query)
+            const orders = await cursor.toArray()
+            res.send(orders)
+        })
+
+        app.delete('/order/:id',async(req,res)=>{
+            const id = req.params.id
+            const query = { _id: ObjectId(id) };
+            const result = await orderCollection.deleteOne(query)
+            res.send(result)
+        })
 
 
 
@@ -123,11 +149,11 @@ async function run() {
         })
 
         // user profile info get api 
-        app.get('/profile',verify ,async(req,res)=>{
+        app.get('/profile', verify, async (req, res) => {
             const email = req.query.email
-            const query = {email:email}
-            const cursor =profileCollection.find(query)
-            const profile= await cursor.toArray()
+            const query = { email: email }
+            const cursor = profileCollection.find(query)
+            const profile = await cursor.toArray()
             res.send(profile)
         })
 
@@ -153,7 +179,6 @@ async function run() {
         // user info all api
         app.get('/user', verifyJWT, async (req, res) => {
             const users = await userCollection.find().toArray();
-
             res.send(users);
         });
 
@@ -183,7 +208,7 @@ async function run() {
         app.get('/admin/:email', async (req, res) => {
             const email = req.params.email;
             const user = await userCollection.findOne({ email: email });
-            const isAdmin = user.role === 'admin';
+            // const isAdmin = user.role === 'admin';
             res.send(user)
         })
 
