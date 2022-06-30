@@ -109,11 +109,12 @@ async function run() {
             res.send(orders)
         })
 
-        app.get('/order', verifyJWT, async (req, res) => {
+        app.get('/myOrder', verifyJWT, async (req, res) => {
             const email = req.query.email;
             const decodedEmail = req.decoded.email;
             if (email === decodedEmail) {
                 const query = { email: email };
+                // console.log(query)
                 const order = await orderCollection.find(query).toArray();
                 return res.send(order);
             }
